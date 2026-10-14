@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CROPS Canary — warrant canaries on Arkiv</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:860px;margin:2rem auto;padding:0 1rem;background:#0f1115;color:#e6e6e6}
+input,button{font:inherit;padding:.4rem .6rem;border-radius:6px;border:1px solid #444;background:#1a1d24;color:#eee}
+table{width:100%;border-collapse:collapse;margin-top:1rem}td,th{border-bottom:1px solid #2a2e37;padding:.45rem;text-align:left;vertical-align:top}
+.alive{color:#5fd38d}.dead{color:#ff6b6b}.withdrawn{color:#ffb84d}small{color:#999}a{color:#7fb4ff}</style></head>
+<body>
+<h1>🐤 CROPS Canary</h1>
+<p>Self-expiring, signed warrant canaries stored on <a href="https://arkiv.network">Arkiv</a> (Tiramisu testnet).
+A canary is alive only while its entity exists on Arkiv. If the publisher stops renewing it, Arkiv expires it and the
+canary dies on its own. Nobody, the publisher included, can quietly edit or remove it.</p>
+<p><input id="org" placeholder="org slug (blank = all)"> <button id="go">Check</button> <small id="st"></small></p>
+<div id="out"></div>
+<script type="module">
+import { createPublicClient } from "https://esm.sh/@arkiv-network/sdk@0.8.1";
+import { tiramisu } from "https://esm.sh/@arkiv-network/sdk@0.8.1/chains";
+import { eq } from "https://esm.sh/@arkiv-network/sdk@0.8.1/query";
+import { http, verifyMessage } from "https://esm.sh/viem@2";
+const canonical = s => [`crops-canary v1`,`org: ${s.org}`,`seq: ${s.seq}`,`issued: ${s.issued}`,`valid_days: ${s.validDays}`,`statement: ${s.statement}`,`headline: ${s.headline}`].join("\n");
+const pc = createPublicClient({ chain: tiramisu, transport: http() });
+const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function run(){
+  const org = document.getElementById("org").value.trim(); const st = document.getElementById("st");
+  st.textContent = "querying Arkiv…";
+  const where = org ? [eq("app","crops-canary"), eq("org",org)] : eq("app","crops-canary");
+  const rows = []; const byOrg = {};
+  for await (const e of pc.select({key:true,owner:true,creator:true,payload:true,expiresAt:true}).where(where)) {
+    let b; try { b = e.toJson(); } catch { continue; }
+    let ok = false; try { ok = await verifyMessage({address:b.signer,message:canonical(b),signature:b.signature}) && b.signer.toLowerCase() === String(e.creator ?? e.owner).toLowerCase(); } catch {}
+    rows.push({e,b,ok}); if (ok) (byOrg[b.org] ??= []).push(b);
+  }
+  let html = "<table><tr><th>Org</th><th>Status</th><th>Latest statement</th></tr>";
+  const orgs = org ? [org] : Object.keys(byOrg);
+  for (const o of orgs) { const cs = byOrg[o] || []; const l = cs.sort((a,b)=>b.seq-a.seq)[0];
+    const s = !l ? "dead" : l.withdrawn ? "withdrawn" : "alive";
+    html += `<tr><td>${esc(o)}</td><td class="${s}">${s.toUpperCase()}</td><td>${l ? `#${l.seq} · ${esc(l.statement)}<br><small>signed by ${esc(l.signer)} · issued ${esc(l.issued)}</small>` : "<small>no live canary on Arkiv</small>"}</td></tr>`; }
+  html += "</table><h3>Raw entities</h3><table><tr><th>Entity key</th><th>Sig</th><th>Expires</th></tr>";
+  for (const {e,ok} of rows) html += `<tr><td><small>${esc(e.key)}</small></td><td>${ok?"✅":"❌"}</td><td><small>${esc(e.expiresAt)}</small></td></tr>`;
+  document.getElementById("out").innerHTML = html + "</table>"; st.textContent = `${rows.length} entities`;
+}
+document.getElementById("go").onclick = run; run();
+</script>
+<p><small>Source: <a href="https://github.com/ifeohsun/arkiv-canary">github.com/ifeohsun/arkiv-canary</a> · MIT · synthetic demo data only</small></p>
+</body></html>

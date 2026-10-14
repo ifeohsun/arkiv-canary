@@ -1,0 +1,16 @@
+{
+  "name": "arkiv-canary",
+  "version": "0.1.0",
+  "description": "Censorship-resistant, self-expiring warrant canaries on Arkiv (Tiramisu testnet)",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/",
+    "publish-canary": "node scripts/publish.mjs",
+    "list": "node scripts/list.mjs"
+  },
+  "dependencies": {
+    "@arkiv-network/sdk": "^0.8.1",
+    "viem": "^2.38.2"
+  }
+}
