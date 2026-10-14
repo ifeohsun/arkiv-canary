@@ -2,7 +2,7 @@
 
 **Project name:** CROPS Canary
 **Tagline:** Self-expiring, signed warrant canaries on Arkiv. If they're not renewed, they die on their own, and nobody can quietly edit them.
-**Links:** repo https://github.com/ifeohsun/arkiv-canary · live https://ifeohsun.github.io/arkiv-canary/ · demo video <VIDEO_URL>
+**Links:** repo https://github.com/ifeohsun/arkiv-canary · live https://ifeohsun.github.io/arkiv-canary/ · demo video https://github.com/ifeohsun/arkiv-canary/releases/download/demo-v1/crops-canary-demo.mp4
 **Tracks:** Censorship Resistance (primary), Privacy
 
 **The problem it solves\***
