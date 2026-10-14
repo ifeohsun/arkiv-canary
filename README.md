@@ -42,6 +42,9 @@ Viewer: open `index.html` (or the GitHub Pages link). No build step.
 | Entity creator wallet (Tiramisu) | `0x27440d0125f0F49FFfe3aF16d2FcB566aDEf841A` |
 | Demo entities / tx | 4 live entities, see [`DEPLOYMENTS.md`](DEPLOYMENTS.md) |
 
+## Demo video
+▶️ https://github.com/ifeohsun/arkiv-canary/releases/download/demo-v1/crops-canary-demo.mp4 (2:37, 720p)
+
 ## Demo script (≤3 min)
 See `DEMO.md`.
 
