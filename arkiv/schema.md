@@ -9,7 +9,7 @@ One entity type: **canary statement**. Each renewal is a new entity; old ones ex
 | `seq` | attribute | i32 | `3` | Monotonic sequence number; newest wins |
 | `withdrawn` | attribute | str `yes`/`no` | `no` | Explicit withdrawal (the "dead" signal without waiting) |
 | payload | JSON | `application/json` | `{org,seq,issued,validDays,statement,headline,signer,signature,withdrawn}` | Full signed statement |
-| expiry | entity lifetime | `ExpirationTime.fromDays(validDays)` | 7 days | **The core mechanic**: when it isn't renewed, the canary disappears from Arkiv and readers see DEAD |
+| Entity Expiration | entity lifetime | `ExpirationTime.fromDays(validDays)` | 7 days (demo: 30) | **The core mechanic**: when it isn't renewed, the canary disappears from Arkiv and readers see DEAD |
 | creator/owner | system | address | `0x2744…841A` | Must equal the EIP-191 signer in the payload |
 
 ## Signature
@@ -24,3 +24,11 @@ One entity type: **canary statement**. Each renewal is a new entity; old ones ex
 ## Queries used
 - `select({key,owner,creator,payload,expiresAt}).where([eq("app","crops-canary"), eq("org", org)])`
 - `select(...).where(eq("app","crops-canary"))`, which lists every live canary
+
+## Expiration per entity type
+| Entity type | Expiration | Renewal |
+|---|---|---|
+| canary statement | `validDays` chosen by publisher (default 7, demo 30) | publish a new seq. Old ones expire on their own, so there is no Lifetime Extension of old statements on purpose |
+
+## Trust
+Readers trust `$creator` (immutable), never `$owner`. The EIP-191 signer must equal the creator.

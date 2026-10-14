@@ -1,17 +1,34 @@
-# Friction report — building on Arkiv (Tiramisu), Oct 2026
+# Friction report: building CROPS Canary on Arkiv
 
-Specific, reproducible notes from building CROPS Canary with `@arkiv-network/sdk@0.8.1`, Node 20.
+Environment: `@arkiv-network/sdk@0.8.1`, `viem@2.38`, Node 20.19, Linux. Tiramisu testnet (chain 7738577), 14 Oct 2026.
 
-1. **Faucet can't be used headless.** `GET/POST https://hub.arkiv.network/api/faucet` returns
-   `{"error":"Unauthorized"}` without a wallet session, and a captcha token is also needed. CI and agent workflows
-   can't fund a fresh test key. Suggestion: a rate-limited faucet that works per address, or a funded CI key for hackathons.
-2. **README says Node ≥ 22.10** for `--experimental-strip-types`, but the plain `.mjs` ESM build works fine
-   on Node 20. Saying so would save people from upgrading.
-3. **The README example key** (`0x3d05…7a5e`) is shared and often empty. With a 0 balance, `createEntity`
-   only fails with a generic insufficient-funds RPC error. A pre-flight balance check in `createWalletClient` would help.
-4. **Expiry semantics are well documented in the type docs** (extend *sets* the new expiry, it doesn't add to the old one). This was
-   the key feature for us, but it only appears in `.d.ts` JSDoc, not in the README.
-5. **`where([...])` with an array of predicates** works, but the README only shows a single `eq`.
-   One AND example would help.
-6. **Payload helpers:** `jsonToPayload` and `entity.toJson()` are symmetric and nice. `toJson()` throws on a
-   non-JSON payload, so readers have to wrap it in try/catch when they scan public entities written by others.
+### 1. Faucet: can't be used headless
+- **Expected:** fund a fresh test key from a script or CI (`POST /api/faucet {recipient}`).
+- **Actual:** `GET` and `POST https://hub.arkiv.network/api/faucet` both return `{"error":"Unauthorized"}` without a browser wallet session, and the POST also needs a `captchaToken`.
+- **Repro:** `curl -X POST https://hub.arkiv.network/api/faucet -H 'content-type: application/json' -d '{"recipient":"0x…"}'`
+- **Suggestion:** a rate-limited per-address faucet for hackathons, or document that the faucet is browser-only.
+
+### 2. README says Node ≥ 22.10
+- **Expected:** a modern Node is needed. **Actual:** the ESM build runs fine on Node 20.19 with plain `.mjs`. Only the `--experimental-strip-types` route needs 22.
+- **Suggestion:** state the real minimum for JS users.
+
+### 3. Unclear error with an empty wallet
+- **Expected:** a clear "insufficient balance" from `createEntity`. **Actual:** a generic RPC/viem error. The README's shared example key `0x3d05…7a5e` is often empty, so first-time users hit this.
+- **Repro:** `createWalletClient` with an unfunded key, then `createEntity({...})`.
+- **Suggestion:** an optional pre-flight balance check, or a mapped error message.
+
+### 4. Entity Expiration / Lifetime Extension semantics only in `.d.ts`
+- **Expected:** the README explains that `extendEntity` *sets* a new expiry (counted from now) and reverts if it is not later.
+- **Actual:** this, the feature our whole design depends on, is only in JSDoc in `dist/*.d.ts`.
+- **Suggestion:** add a README section with an example.
+
+### 5. AND queries are undocumented
+- **Expected:** a README example of multiple predicates. **Actual:** only a single `eq()` is shown. `where([eq("app",…), eq("org",…)])` works, but we found it by trial.
+- **Versions:** SDK 0.8.1. **Repro:** `scripts/list.mjs demo-newsroom`.
+
+### 6. `expiresAt` is a block number
+- **Expected:** a date-like value (the type is `bigint | Date`). **Actual:** we get a block number (e.g. `1864256n`), so the UI has to fetch block time to show a human date.
+- **Suggestion:** return or offer both block and an estimated timestamp.
+
+### 7. `toJson()` throws on non-JSON payloads
+- When scanning public entities written by others under the same attribute, one bad payload throws. We wrap it in try/catch (`src/arkiv.mjs`). A `safeJson()` / `tryJson()` would help.
