@@ -41,7 +41,7 @@ Designing the schema so "dead" needs no action (absence = dead) while "withdrawn
    (e) `npm test` runs the offline sign/verify/status tests.
 9. **Pre-existing work\*:** None. Built 14–18 Oct 2026. Dependencies: @arkiv-network/sdk, viem.
 10. **Arkiv surfaces used\*:** TypeScript SDK, Direct JSON-RPC (block time check), Docs, Hub, Faucet, Block Explorer
-12. **First entity written\*:** More than a day (the code was ready the same day, but the wallet couldn't be funded until the faucet was claimed in a browser)
+12. **First entity written\*:** 2 hours or less
 13. **LLMs used\*:** AI coding agent (Grok Bot); all code reviewed and run by the builder
 14. **One thing to improve first\*:** a faucet that works headless or from the CLI for test wallets, so agents and CI can build on Arkiv
 15. **Feedback call\*:** Yes
